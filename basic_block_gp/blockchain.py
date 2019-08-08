@@ -12,7 +12,7 @@ class Blockchain(object):
         self.current_transactions = []
         self.nodes = set()
 
-        self.new_block(previous_hash=1, proof=100)
+        self.new_block(previous_hash=1, proof=99)
 
     def new_block(self, proof, previous_hash=None):
         """
@@ -35,13 +35,17 @@ class Blockchain(object):
         self.current_transactions = []
 
         self.chain.append(block)
-        return block
+        chain_check = self.valid_chain(self.chain)
+        if chain_check == True:
+            return block
+        else:
+            return False
 
     def new_transaction(self, sender, recipient, amount):
         """
         Creates a new transaction to go into the next mined Block
 
-        :param sender: <str> Address of the Recipient
+        :param sender: <str> Address of the Sender
         :param recipient: <str> Address of the Recipient
         :param amount: <int> Amount
         :return: <int> The index of the BLock that will hold this transaction
@@ -81,7 +85,12 @@ class Blockchain(object):
         zeroes
         """
 
-        pass
+        proof = 0
+        
+        while self.valid_proof(last_proof, proof) != True:
+            proof += 1
+
+        return proof
 
     @staticmethod
     def valid_proof(last_proof, proof):
@@ -89,8 +98,15 @@ class Blockchain(object):
         Validates the Proof:  Does hash(block_string, proof) contain 6
         leading zeroes?
         """
-        # TODO
-        pass
+        guess = f'{last_proof} {proof}'.encode()
+        guess_hash = hashlib.sha256(guess).hexdigest()
+        first_six = guess_hash[:6]
+
+        if first_six != "000000":
+            return False
+        else:
+            return True
+
 
     def valid_chain(self, chain):
         """
@@ -109,10 +125,16 @@ class Blockchain(object):
             print(f'{block}')
             print("\n-------------------\n")
             # Check that the hash of the block is correct
-            # TODO: Return false if hash isn't correct
+            # Return false if hash isn't correct
+            block_hash = self.hash(last_block)
+            if block_hash != block['previous_hash']:
+                return False
 
             # Check that the Proof of Work is correct
-            # TODO: Return false if proof isn't correct
+            # Return false if proof isn't correct
+            check = self.valid_proof(last_block['proof'], block['proof'])
+            if check == False:
+                return False
 
             last_block = block
             current_index += 1
@@ -133,16 +155,24 @@ blockchain = Blockchain()
 @app.route('/mine', methods=['GET'])
 def mine():
     # We run the proof of work algorithm to get the next proof...
-    proof = blockchain.proof_of_work()
+    proof = blockchain.proof_of_work(blockchain.last_block)
 
     # We must receive a reward for finding the proof.
-    # TODO:
+
     # The sender is "0" to signify that this node has mine a new coin
     # The recipient is the current node, it did the mining!
     # The amount is 1 coin as a reward for mining the next block
 
     # Forge the new Block by adding it to the chain
-    # TODO
+    blockchain.new_transaction("0", node_identifier, 1)
+
+    block = blockchain.new_block(proof, blockchain.hash(blockchain.last_block))
+
+    if block == False:
+        response = {
+            'message': "Invalid Chain!"
+        }
+        return jsonify(response), 400
 
     # Send a response with the new block
     response = {
@@ -176,11 +206,13 @@ def new_transaction():
 @app.route('/chain', methods=['GET'])
 def full_chain():
     response = {
-        # TODO: Return the chain and its current length
+        # Return the chain and its current length
+        'currentChain': blockchain.chain,
+        'length': len(blockchain.chain)
     }
     return jsonify(response), 200
 
 
 # Run the program on port 5000
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='localhost', port=5000)
