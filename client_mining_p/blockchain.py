@@ -100,11 +100,11 @@ class Blockchain(object):
         """
         guess = f'{last_proof} {proof}'.encode()
         guess_hash = hashlib.sha256(guess).hexdigest()
-        first_six = guess_hash[:6]
+        first_four = guess_hash[:4]
 
         print({'PREV': last_proof, 'CURR': proof, 'HASH': guess_hash})
 
-        if first_six != "000000":
+        if first_four != "0000":
             return False
         else:
             return True
@@ -136,7 +136,7 @@ class Blockchain(object):
 
             # Check that the Proof of Work is correct
             # Return false if proof isn't correct
-            check = self.valid_proof(last_block, block['proof'])
+            check = self.valid_proof(last_block['proof'], block['proof'])
             if check == False:
               print("BCUZ OF PROOF")
               return False
@@ -160,7 +160,7 @@ blockchain = Blockchain()
 @app.route('/mine', methods=['GET'])
 def mine():
     # We run the proof of work algorithm to get the next proof...
-    proof = blockchain.proof_of_work(blockchain.last_block)
+    proof = blockchain.proof_of_work(blockchain.last_block['proof'])
 
     # We must receive a reward for finding the proof.
 
