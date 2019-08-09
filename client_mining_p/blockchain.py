@@ -79,12 +79,12 @@ class Blockchain(object):
         return self.chain[-1]
 
     @staticmethod
-    def valid_proof(last_proof, proof):
+    def valid_proof(last_block_string, proof):
         """
         Validates the Proof:  Does hash(block_string, proof) contain 6
         leading zeroes?
         """
-        guess = f'{last_proof} {proof}'.encode()
+        guess = f'{last_block_string} {proof}'.encode()
         guess_hash = hashlib.sha256(guess).hexdigest()
         first_six = guess_hash[:6]
 
@@ -158,7 +158,7 @@ def mine():
     if not 'proof' in values:
       return 'Missing proof!'
 
-    if blockchain.valid_proof(blockchain.chain[-1]['proof'], values['proof']):
+    if blockchain.valid_proof(blockchain.last_block['previous_hash'], values['proof']):
       
       blockchain.new_transaction("0", node_identifier, 1)
 
@@ -204,27 +204,11 @@ def new_transaction():
     response = {'message': f'Transaction will be added to Block {index}'}
     return jsonify(response), 201
 
-@app.route('/last-proof', methods=['GET'])
-def last_proof():
+@app.route('/last-block-string', methods=['GET'])
+def last_block_string():
   response = {
-    'message': "last proof",
-    'last_proof': blockchain.chain[-1]['proof']
+    'message': "last block string",
+    'last_block_string': blockchain.last_block['previous_hash']
   }
 
   return jsonify(response), 201
-
-
-@app.route('/chain', methods=['GET'])
-def full_chain():
-    response = {
-        # Return the chain and its current length
-        'currentChain': blockchain.chain,
-        'length': len(blockchain.chain)
-    }
-    return jsonify(response), 200
-
-
-# Run the program on port 5000
-if __name__ == '__main__':
-    app.run(host='localhost', port=5000)
-

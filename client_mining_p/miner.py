@@ -16,11 +16,11 @@ if __name__ == '__main__':
 
     valid_proof = Blockchain.valid_proof
 
-    def proof_of_work(last_proof):
+    def proof_of_work(last_block_string):
 
         proof = 0
         
-        while valid_proof(last_proof, proof) != True:
+        while valid_proof(last_block_string, proof) != True:
             proof += 1
 
         return proof
@@ -30,10 +30,11 @@ if __name__ == '__main__':
     # Run forever until interrupted
     while True:
         # Get the last proof from the server and look for a new one
-        request = requests.get(f'{node}/last-proof')
-        last_proof = request.json()['last_proof']
+        request = requests.get(f'{node}/last-block-string')
+        print(request.json())
+        last_block_string = request.json()['last_block_string']
 
-        new_proof = proof_of_work(last_proof)
+        new_proof = proof_of_work(last_block_string)
         # : When found, POST it to the server {"proof": new_proof}
         post = requests.post(f'{node}/mine', json={'proof': f'{new_proof}'})
         

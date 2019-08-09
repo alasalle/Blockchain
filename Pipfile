@@ -5,7 +5,7 @@ verify_ssl = true
 
 [dev-packages]
 flake8 = "*"
-pylint = "*"
+pylint = "<2.0.0"
 
 [packages]
 requests = "==2.18.4"
